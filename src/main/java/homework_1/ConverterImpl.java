@@ -4,26 +4,31 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- *  Содержит статический метод для конвертации строки из слов в словарь.
+ * Содержит статический метод для конвертации строки из слов в словарь.
  */
-public class StringToDictionaryConverter {
+public class ConverterImpl implements AbstractConverter {
 
     /**
      * Предназначен для конвертации строки из слов в словарь (Map)
      *
      * @param stringToProcess Строка к обработке, содержащая слова, разделенные пробелами
-     * @return Словарь (Map) ключом в котором является буква, на которую начинаются слова из списка. В значении словаря содержится
+     * @return Словарь (Map) ключом является буква, на которую начинаются слова из списка. В значении словаря содержится
      * список слов, начинающихся на букву из ключа.
-     *
      */
-    public static Map<String, List<String>> convertStringToDictionary(String stringToProcess) {
-        if (stringToProcess.isEmpty()) {
+    public Map<String, List<String>> convertStringToDictionary(String stringToProcess) {
+
+        if (stringToProcess == null) {
+            throw new IllegalArgumentException("Must be not null!");
+        }
+
+        if (stringToProcess.isEmpty() || stringToProcess.isBlank()) {
             return new LinkedHashMap<>();
         }
+
         return Arrays.stream(stringToProcess.split(" "))
                 .map(String::toLowerCase)
                 .sorted(Comparator.comparing(String::length).reversed().thenComparing(String::compareTo))
-                .collect(Collectors.groupingBy(word -> String.valueOf(word.charAt(0))))
+                .collect(Collectors.groupingBy(word -> word.substring(0, 1)))
                 .entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().size() > 1)
