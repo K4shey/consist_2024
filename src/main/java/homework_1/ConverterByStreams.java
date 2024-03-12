@@ -4,9 +4,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Содержит статический метод для конвертации строки из слов в словарь.
+ * Содержит метод для конвертации строки из слов в словарь.
  */
-public class ConverterImpl implements AbstractConverter {
+public class ConverterByStreams implements Converter {
 
     /**
      * Предназначен для конвертации строки из слов в словарь (Map)
@@ -32,6 +32,6 @@ public class ConverterImpl implements AbstractConverter {
                 .entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().size() > 1)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (exist, newVal) -> newVal, LinkedHashMap::new));
     }
 }

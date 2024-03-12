@@ -16,6 +16,7 @@
 - Java 17
 - Stream API
 - JUnit 5
+- AssertJ
 - Maven
 
 ## Тестирование
