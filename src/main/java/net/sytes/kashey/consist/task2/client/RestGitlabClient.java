@@ -1,6 +1,6 @@
 package net.sytes.kashey.consist.task2.client;
 
-import net.sytes.kashey.consist.task2.util.ClientUtil;
+import net.sytes.kashey.consist.task2.config.GitlabProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -13,13 +13,13 @@ import java.util.Map;
 @Service
 public class RestGitlabClient implements GitlabClient {
 
-    private final Environment environment;
-
     private final RestTemplate restTemplate;
 
-    public RestGitlabClient(RestTemplate restTemplate, Environment environment) {
+    private final GitlabProperties gitlabProperties;
+
+    public RestGitlabClient(RestTemplate restTemplate, Environment environment, GitlabProperties gitlabProperties) {
         this.restTemplate = restTemplate;
-        this.environment = environment;
+        this.gitlabProperties = gitlabProperties;
     }
 
     @Override
@@ -27,7 +27,7 @@ public class RestGitlabClient implements GitlabClient {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(createRequestBody(body), createHttpHeaders());
         try {
             ResponseEntity<String> responseEntity = restTemplate
-                    .postForEntity(ClientUtil.getActualUrl(environment), request, String.class);
+                    .postForEntity(getActualUrl(), request, String.class);
             return responseEntity.getStatusCode() == HttpStatus.CREATED;
         } catch (RestClientResponseException e) {
             return false;
@@ -42,8 +42,12 @@ public class RestGitlabClient implements GitlabClient {
 
     private HttpHeaders createHttpHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        headers.add("PRIVATE-TOKEN", environment.getProperty("gitlab.token"));
+        headers.add("PRIVATE-TOKEN", gitlabProperties.token());
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
+    }
+
+    public String getActualUrl() {
+        return gitlabProperties.url() + gitlabProperties.project() + "/issues/" + gitlabProperties.issue() + "/notes";
     }
 }

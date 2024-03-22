@@ -1,0 +1,8 @@
+gitlab:
+  token:
+  project: 55606763
+  issue: 2
+  url: https://gitlab.com/api/v4/projects/
+spring:
+  application:
+    name: task2

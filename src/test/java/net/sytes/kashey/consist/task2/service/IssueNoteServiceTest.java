@@ -2,13 +2,11 @@ package net.sytes.kashey.consist.task2.service;
 
 
 import net.sytes.kashey.consist.task2.client.GitlabClient;
-import net.sytes.kashey.consist.task2.util.ClientUtil;
+import net.sytes.kashey.consist.task2.config.GitlabProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureMockRestServiceServer;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
-import org.springframework.core.env.Environment;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -19,20 +17,20 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@RestClientTest(GitlabClient.class)
-@AutoConfigureMockRestServiceServer
-class IssueNoteServiceTest {
 
+@SpringBootTest
+//@RestClientTest(GitlabClient.class)
+class IssueNoteServiceTest {
     MockRestServiceServer mockRestServiceServer;
 
     @Autowired
-    GitlabClient gitlabClient;
+    private GitlabClient gitlabClient;
 
     @Autowired
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @Autowired
-    private Environment environment;
+    private GitlabProperties gitlabProperties;
 
     @BeforeEach
     public void setUp() {
@@ -42,7 +40,7 @@ class IssueNoteServiceTest {
     @Test
     void addNote_withBody_ReturnsSuccess() throws Exception {
         mockRestServiceServer
-                .expect(requestTo(ClientUtil.getActualUrl(environment)))
+                .expect(requestTo(getActualUrl()))
                 .andRespond(withSuccess());
         gitlabClient.addNote("Тестовый комментарий");
         mockRestServiceServer.verify();
@@ -51,7 +49,7 @@ class IssueNoteServiceTest {
     @Test
     void addNote_NoBody_ReturnsInternalServiceError() throws Exception {
         mockRestServiceServer
-                .expect(requestTo(ClientUtil.getActualUrl(environment)))
+                .expect(requestTo(getActualUrl()))
                 .andRespond(withServerError());
         gitlabClient.addNote(null);
         mockRestServiceServer.verify();
@@ -61,5 +59,9 @@ class IssueNoteServiceTest {
         return withStatus(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error adding note")
                 .contentType(MediaType.APPLICATION_JSON);
+    }
+
+    public String getActualUrl() {
+        return gitlabProperties.url() + gitlabProperties.project() + "/issues/" + gitlabProperties.issue() + "/notes";
     }
 }

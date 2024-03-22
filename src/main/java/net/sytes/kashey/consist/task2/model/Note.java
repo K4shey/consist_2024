@@ -2,25 +2,16 @@ package net.sytes.kashey.consist.task2.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.Objects;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Note {
-    private final String body;
-    private Long id;
+public record Note(String body, Long id) {
+
+    public Note {
+        Objects.requireNonNull(body, "Body must not be null");
+    }
 
     public Note(String body) {
-        this.body = body;
-    }
-
-    public Note(String body, Long id) {
-        this.body = body;
-        this.id = id;
-    }
-
-    @Override
-    public String toString() {
-        return "Note{" +
-                "body='" + body + '\'' +
-                ", id=" + id +
-                '}';
+        this(body, null);
     }
 }
