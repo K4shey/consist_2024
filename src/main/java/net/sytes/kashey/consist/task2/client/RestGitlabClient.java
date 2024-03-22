@@ -4,9 +4,11 @@ import net.sytes.kashey.consist.task2.util.ClientUtil;
 import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class RestGitlabClient implements GitlabClient {
@@ -22,15 +24,26 @@ public class RestGitlabClient implements GitlabClient {
 
     @Override
     public boolean addNote(String body) {
-        String token = environment.getProperty("gitlab.token");
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("PRIVATE-TOKEN", token);
-        HashMap<String, String> requestBody = new HashMap<>();
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(createRequestBody(body), createHttpHeaders());
+        try {
+            ResponseEntity<String> responseEntity = restTemplate
+                    .postForEntity(ClientUtil.getActualUrl(environment), request, String.class);
+            return responseEntity.getStatusCode() == HttpStatus.CREATED;
+        } catch (RestClientResponseException e) {
+            return false;
+        }
+    }
+
+    private Map<String, String> createRequestBody(String body) {
+        Map<String, String> requestBody = new HashMap<>();
         requestBody.put("body", body);
-        HttpEntity<HashMap<String, String>> request = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<String> responseEntity = restTemplate
-                .postForEntity(ClientUtil.getActualUrl(environment), request, String.class);
-        return responseEntity.getStatusCode() == HttpStatus.CREATED;
+        return requestBody;
+    }
+
+    private HttpHeaders createHttpHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("PRIVATE-TOKEN", environment.getProperty("gitlab.token"));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 }

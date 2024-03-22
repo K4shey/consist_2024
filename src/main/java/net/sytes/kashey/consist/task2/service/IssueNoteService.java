@@ -2,7 +2,6 @@ package net.sytes.kashey.consist.task2.service;
 
 import net.sytes.kashey.consist.task2.client.GitlabClient;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class IssueNoteService {
@@ -14,10 +13,6 @@ public class IssueNoteService {
     }
 
     public boolean addNote(String body) {
-        try {
-            return client.addNote(body);
-        } catch (RestClientResponseException e) {
-            return false;
-        }
+        return client.addNote(body);
     }
 }
