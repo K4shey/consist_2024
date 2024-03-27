@@ -3,43 +3,31 @@ package net.sytes.kashey.consist.task2.service;
 
 import net.sytes.kashey.consist.task2.client.GitlabClient;
 import net.sytes.kashey.consist.task2.config.GitlabProperties;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureMockRestServiceServer;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseCreator;
-import org.springframework.web.client.RestTemplate;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-
 @RestClientTest(GitlabClient.class)
-@AutoConfigureMockRestServiceServer
 class IssueNoteServiceTest {
 
+    @Autowired
     MockRestServiceServer mockRestServiceServer;
 
     @Autowired
     private GitlabClient gitlabClient;
 
-    @Autowired
-    private RestTemplate restTemplate;
-
     @MockBean
     private GitlabProperties gitlabProperties;
-
-    @BeforeEach
-    public void setUp() {
-        mockRestServiceServer = MockRestServiceServer.createServer(restTemplate);
-    }
 
     @Test
     void addNote_withBody_ReturnsSuccess() throws Exception {
