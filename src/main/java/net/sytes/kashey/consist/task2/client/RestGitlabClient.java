@@ -1,7 +1,7 @@
 package net.sytes.kashey.consist.task2.client;
 
 import net.sytes.kashey.consist.task2.config.GitlabProperties;
-import org.springframework.core.env.Environment;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
@@ -17,8 +17,8 @@ public class RestGitlabClient implements GitlabClient {
 
     private final GitlabProperties gitlabProperties;
 
-    public RestGitlabClient(RestTemplate restTemplate, Environment environment, GitlabProperties gitlabProperties) {
-        this.restTemplate = restTemplate;
+    public RestGitlabClient(RestTemplateBuilder restTemplateBuilder, GitlabProperties gitlabProperties) {
+        this.restTemplate = restTemplateBuilder.build();
         this.gitlabProperties = gitlabProperties;
     }
 
