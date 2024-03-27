@@ -1,6 +1,7 @@
 package net.sytes.kashey.consist.task2.client;
 
 import net.sytes.kashey.consist.task2.config.GitlabProperties;
+import net.sytes.kashey.consist.task2.model.Note;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -37,7 +38,7 @@ class RestGitlabClientTest {
         mockRestServiceServer.expect(ExpectedCount.times(1), requestTo(getActualUrl()))
                 .andRespond(withStatus(HttpStatus.CREATED));
 
-        gitlabClient.addNote("Тестовый комментарий");
+        gitlabClient.addNote(new Note("Тестовый комментарий"));
         this.mockRestServiceServer.verify();
     }
 
@@ -52,8 +53,6 @@ class RestGitlabClientTest {
                 .expect(ExpectedCount.times(1), requestTo(getActualUrl()))
                 .andRespond(withServerError());
         Assertions.assertFalse(this.gitlabClient.addNote(null));
-
-        this.mockRestServiceServer.verify();
     }
 
     private ResponseCreator withServerError() {

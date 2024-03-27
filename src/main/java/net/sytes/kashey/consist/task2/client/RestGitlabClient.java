@@ -1,6 +1,7 @@
 package net.sytes.kashey.consist.task2.client;
 
 import net.sytes.kashey.consist.task2.config.GitlabProperties;
+import net.sytes.kashey.consist.task2.model.Note;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,11 @@ public class RestGitlabClient implements GitlabClient {
     }
 
     @Override
-    public boolean addNote(String body) {
-        HttpEntity<Map<String, String>> request = new HttpEntity<>(createRequestBody(body), createHttpHeaders());
+    public boolean addNote(Note note) {
+        if (note == null) {
+            return false;
+        }
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(createRequestBody(note.body()), createHttpHeaders());
         try {
             ResponseEntity<String> responseEntity = restTemplate
                     .postForEntity(getActualUrl(), request, String.class);

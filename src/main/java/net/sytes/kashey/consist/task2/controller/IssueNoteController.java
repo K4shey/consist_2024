@@ -1,5 +1,6 @@
 package net.sytes.kashey.consist.task2.controller;
 
+import net.sytes.kashey.consist.task2.dto.NoteDto;
 import net.sytes.kashey.consist.task2.service.IssueNoteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,12 @@ public class IssueNoteController {
 
     @ResponseBody
     @PostMapping
-    public ResponseEntity<String> addNote(@RequestParam(value = "body", required = false) String body) {
+    public ResponseEntity<NoteDto> addNote(@RequestParam(value = "body", required = false) String body) {
 
         if (service.addNote(body)) {
-            return new ResponseEntity<>("Success", HttpStatus.OK);
+            return new ResponseEntity<>(new NoteDto(body), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Adding note error", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new NoteDto(""), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

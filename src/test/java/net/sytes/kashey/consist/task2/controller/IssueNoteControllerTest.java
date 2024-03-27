@@ -30,24 +30,24 @@ class IssueNoteControllerTest {
     @Test
     public void addNote_ReturnsStatus_OK() throws Exception {
 
-        String body = "Тестовый комментарий";
+        String body = "Test comment";
 
         when(service.addNote(body)).thenReturn(true);
 
         mockMvc.perform(post("/api/notes")
                         .param("body", body))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Success"));
+                .andExpect(content().string("{\"body\":\"Test comment\"}"));
     }
 
     @Test
     public void addNote_ReturnsStatus_InternalServerError() throws Exception {
 
-        when(service.addNote("Тестовый комментарий")).thenReturn(false);
+        when(service.addNote("Test comment")).thenReturn(false);
 
         mockMvc.perform(post("/api/notes")
-                        .param("body", "Тестовый комментарий"))
+                        .param("body", "Test comment"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(content().string("Adding note error"));
+                .andExpect(content().string("{\"body\":\"\"}"));
     }
 }

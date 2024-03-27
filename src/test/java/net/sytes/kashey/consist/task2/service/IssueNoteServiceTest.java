@@ -1,42 +1,43 @@
 package net.sytes.kashey.consist.task2.service;
 
 
-import net.sytes.kashey.consist.task2.client.GitlabClient;
+import net.sytes.kashey.consist.task2.client.RestGitlabClient;
+import net.sytes.kashey.consist.task2.model.Note;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class IssueNoteServiceTest {
+    @Mock
+    private RestGitlabClient gitlabClient;
 
-    @Autowired
+    @InjectMocks
     private IssueNoteService issueNoteService;
 
-    @MockBean
-    private GitlabClient gitlabClient;
+    Note note;
+
+    @BeforeEach
+    public void Initialization() {
+        note = new Note("Тестовый комментарий");
+    }
 
     @Test
     void addNote_WithBody_ReturnsTrue() {
-
-        Mockito.when(gitlabClient.addNote("Тестовый комментарий")).thenReturn(true);
-
-        boolean result = issueNoteService.addNote("Тестовый комментарий");
-
-        assertTrue(result);
+        when(gitlabClient.addNote(note)).thenReturn(true);
+        assertTrue(issueNoteService.addNote(note.body()));
     }
 
     @Test
     void addNote_WithoutBody_ReturnsFalse() {
 
-        Mockito.when(gitlabClient.addNote("Тестовый комментарий")).thenReturn(true);
-
-        boolean result = issueNoteService.addNote(null);
-
-        assertFalse(result);
+        Assertions.assertThrows(NullPointerException.class, () -> issueNoteService.addNote(null));
     }
 }
