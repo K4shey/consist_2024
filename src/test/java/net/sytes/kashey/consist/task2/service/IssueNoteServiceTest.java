@@ -5,8 +5,11 @@ import net.sytes.kashey.consist.task2.client.GitlabClient;
 import net.sytes.kashey.consist.task2.config.GitlabProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureMockRestServiceServer;
+import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -18,9 +21,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 
-@SpringBootTest
-//@RestClientTest(GitlabClient.class)
+@RestClientTest(GitlabClient.class)
+@AutoConfigureMockRestServiceServer
 class IssueNoteServiceTest {
+
     MockRestServiceServer mockRestServiceServer;
 
     @Autowired
@@ -29,7 +33,7 @@ class IssueNoteServiceTest {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Autowired
+    @MockBean
     private GitlabProperties gitlabProperties;
 
     @BeforeEach
@@ -39,15 +43,26 @@ class IssueNoteServiceTest {
 
     @Test
     void addNote_withBody_ReturnsSuccess() throws Exception {
+
+        Mockito.when(gitlabProperties.url()).thenReturn("https://gitlab.com/api/v4");
+        Mockito.when(gitlabProperties.project()).thenReturn("/projects/55606763");
+        Mockito.when(gitlabProperties.issue()).thenReturn("/2");
+
         mockRestServiceServer
                 .expect(requestTo(getActualUrl()))
                 .andRespond(withSuccess());
+
         gitlabClient.addNote("Тестовый комментарий");
         mockRestServiceServer.verify();
     }
 
     @Test
     void addNote_NoBody_ReturnsInternalServiceError() throws Exception {
+
+        Mockito.when(gitlabProperties.url()).thenReturn("https://gitlab.com/api/v4");
+        Mockito.when(gitlabProperties.project()).thenReturn("/projects/55606763");
+        Mockito.when(gitlabProperties.issue()).thenReturn("/2");
+
         mockRestServiceServer
                 .expect(requestTo(getActualUrl()))
                 .andRespond(withServerError());
@@ -62,6 +77,6 @@ class IssueNoteServiceTest {
     }
 
     public String getActualUrl() {
-        return gitlabProperties.url() + gitlabProperties.project() + "/issues/" + gitlabProperties.issue() + "/notes";
+        return "https://gitlab.com/api/v4/projects/55606763/issues/2/notes";
     }
 }
