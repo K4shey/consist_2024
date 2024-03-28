@@ -18,7 +18,7 @@ public class IssueNoteController {
 
     @ResponseBody
     @PostMapping
-    public ResponseEntity<NoteDto> addNote(@RequestParam(value = "body", required = false) String body) {
+    public ResponseEntity<NoteDto> addNote(@RequestParam(value = "body") String body) {
 
         if (service.addNote(body)) {
             return new ResponseEntity<>(new NoteDto(body), HttpStatus.OK);

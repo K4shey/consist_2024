@@ -37,7 +37,9 @@ class IssueNoteControllerTest {
         mockMvc.perform(post("/api/notes")
                         .param("body", body))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"body\":\"Test comment\"}"));
+                .andExpect(content().string(
+                        """
+                                {"body":"Test comment"}"""));
     }
 
     @Test
@@ -48,6 +50,7 @@ class IssueNoteControllerTest {
         mockMvc.perform(post("/api/notes")
                         .param("body", "Test comment"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(content().string("{\"body\":\"\"}"));
+                .andExpect(content().string("""
+                        {"body":""}"""));
     }
 }

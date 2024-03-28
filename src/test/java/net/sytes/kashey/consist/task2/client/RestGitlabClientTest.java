@@ -2,7 +2,6 @@ package net.sytes.kashey.consist.task2.client;
 
 import net.sytes.kashey.consist.task2.config.GitlabProperties;
 import net.sytes.kashey.consist.task2.model.Note;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.test.web.client.ResponseCreator;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
@@ -35,7 +34,8 @@ class RestGitlabClientTest {
         Mockito.when(gitlabProperties.project()).thenReturn("/projects/12345678");
         Mockito.when(gitlabProperties.issue()).thenReturn("1");
 
-        mockRestServiceServer.expect(ExpectedCount.times(1), requestTo(getActualUrl()))
+        mockRestServiceServer.expect(ExpectedCount.times(1)
+                        , requestTo("https://gitlab.com/api/v4/projects/12345678/issues/1/notes"))
                 .andRespond(withStatus(HttpStatus.CREATED));
 
         gitlabClient.addNote(new Note("Тестовый комментарий"));
@@ -50,18 +50,11 @@ class RestGitlabClientTest {
         Mockito.when(gitlabProperties.issue()).thenReturn("1");
 
         this.mockRestServiceServer
-                .expect(ExpectedCount.times(1), requestTo(getActualUrl()))
-                .andRespond(withServerError());
-        Assertions.assertFalse(this.gitlabClient.addNote(null));
-    }
-
-    private ResponseCreator withServerError() {
-        return withStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error adding note")
-                .contentType(MediaType.APPLICATION_JSON);
-    }
-
-    public String getActualUrl() {
-        return "https://gitlab.com/api/v4/projects/12345678/issues/1/notes";
+                .expect(ExpectedCount.times(1)
+                        , requestTo("https://gitlab.com/api/v4/projects/12345678/issues/1/notes"))
+                .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Error adding note")
+                        .contentType(MediaType.APPLICATION_JSON));
+        assertThat(this.gitlabClient.addNote(null)).isFalse();
     }
 }
