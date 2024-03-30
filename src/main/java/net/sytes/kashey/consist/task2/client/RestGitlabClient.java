@@ -7,6 +7,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +52,17 @@ public class RestGitlabClient implements GitlabClient {
         return headers;
     }
 
-    public String getActualUrl() {
-        return gitlabProperties.url() + gitlabProperties.project() + "/issues/" + gitlabProperties.issue() + "/notes";
+    private String getActualUrl() {
+
+        Map<String, String> urlParams = new HashMap<>();
+        urlParams.put("project_id", gitlabProperties.project());
+        urlParams.put("issue_id", gitlabProperties.issue());
+
+        return UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("gitlab.com")
+                .path("/api/v4/projects/{project_id}/issues/{issue_id}/notes")
+                .buildAndExpand(urlParams)
+                .toUriString();
     }
 }

@@ -30,8 +30,7 @@ class RestGitlabClientTest {
 
     @Test
     void addNote_ReturnsStatus_OK() {
-        Mockito.when(gitlabProperties.url()).thenReturn("https://gitlab.com/api/v4");
-        Mockito.when(gitlabProperties.project()).thenReturn("/projects/12345678");
+        Mockito.when(gitlabProperties.project()).thenReturn("12345678");
         Mockito.when(gitlabProperties.issue()).thenReturn("1");
 
         mockRestServiceServer.expect(ExpectedCount.times(1)
@@ -46,7 +45,7 @@ class RestGitlabClientTest {
     void addNote_NoBody_ReturnsInternalServiceError() throws Exception {
 
         Mockito.when(gitlabProperties.url()).thenReturn("https://gitlab.com/api/v4");
-        Mockito.when(gitlabProperties.project()).thenReturn("/projects/12345678");
+        Mockito.when(gitlabProperties.project()).thenReturn("12345678");
         Mockito.when(gitlabProperties.issue()).thenReturn("1");
 
         this.mockRestServiceServer
