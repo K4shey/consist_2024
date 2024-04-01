@@ -1,0 +1,7 @@
+gitlab:
+  token:
+  project: 55606763
+  issue: 2
+spring:
+  application:
+    name: task2
