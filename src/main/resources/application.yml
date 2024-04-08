@@ -1,9 +1,9 @@
 gitlab:
   token:
   project: 55606763
-  issue: 2
+  issue: 3
 spring:
   application:
-    name: task2
+    name: task3
 server:
   port: 8090
