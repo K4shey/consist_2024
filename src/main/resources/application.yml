@@ -5,3 +5,5 @@ gitlab:
 spring:
   application:
     name: task2
+server:
+  port: 8090
