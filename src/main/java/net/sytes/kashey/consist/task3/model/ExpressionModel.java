@@ -2,22 +2,22 @@ package net.sytes.kashey.consist.task3.model;
 
 public class ExpressionModel {
 
-    private String expression;
+    private final String expression;
     private ExpressionModelStatus status;
-    private boolean needLog;
+    private final boolean needLog;
     private double result;
 
     public ExpressionModel(String expression) {
         this.expression = expression;
         this.needLog = false;
-        this.status = ExpressionModelStatus.CREATED;
+        this.status = ExpressionModelStatus.IN_PROGRESS;
         this.result = 0.0;
     }
 
     public ExpressionModel(String expression, boolean needLog) {
         this.expression = expression;
         this.needLog = needLog;
-        this.status = ExpressionModelStatus.CREATED;
+        this.status = ExpressionModelStatus.IN_PROGRESS;
         this.result = 0.0;
     }
 

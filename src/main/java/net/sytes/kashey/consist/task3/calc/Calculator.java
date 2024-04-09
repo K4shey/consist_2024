@@ -1,12 +1,19 @@
 package net.sytes.kashey.consist.task3.calc;
 
-import net.sytes.kashey.consist.task3.model.ExpressionModelStatus;
 import net.sytes.kashey.consist.task3.model.ExpressionModel;
+import net.sytes.kashey.consist.task3.model.ExpressionModelStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Calculator {
+
     public static ExpressionModel calculate(ExpressionModel expressionModel) {
+
+        try {
+            Thread.sleep(1000 * 30);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         String[] parts = expressionModel.getExpression().split("(?<=[*+\\-/])|(?=[*+\\-/])");
         if (parts.length != 3) {
@@ -16,25 +23,20 @@ public class Calculator {
         double operand2 = Double.parseDouble(parts[2]);
         double calculationResult = getCalculationResult(parts, operand1, operand2);
 
-        expressionModel.setStatus(ExpressionModelStatus.CALCULATED);
+        expressionModel.setStatus(ExpressionModelStatus.COMPLETED);
         expressionModel.setResult(calculationResult);
         return expressionModel;
     }
+
 
     private static double getCalculationResult(String[] parts, double operand1, double operand2) {
         double calculationResult;
         String operator = parts[1];
 
         switch (operator) {
-            case "+" -> {
-                calculationResult = operand1 + operand2;
-            }
-            case "-" -> {
-                calculationResult = operand1 - operand2;
-            }
-            case "*" -> {
-                calculationResult = operand1 * operand2;
-            }
+            case "+" -> calculationResult = operand1 + operand2;
+            case "-" -> calculationResult = operand1 - operand2;
+            case "*" -> calculationResult = operand1 * operand2;
             case "/" -> {
                 if (operand2 == 0) {
                     throw new ArithmeticException("Division by zero");
