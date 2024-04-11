@@ -1,13 +1,13 @@
 package net.sytes.kashey.consist.task3.calc;
 
-import net.sytes.kashey.consist.task3.model.ExpressionModel;
-import net.sytes.kashey.consist.task3.model.ExpressionModelStatus;
+import net.sytes.kashey.consist.task3.model.Expression;
+import net.sytes.kashey.consist.task3.model.ExpressionStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Calculator {
 
-    public static ExpressionModel calculate(ExpressionModel expressionModel) {
+    public static Expression calculate(Expression expression) {
 
         try {
             Thread.sleep(1000 * 30);
@@ -15,7 +15,7 @@ public class Calculator {
             throw new RuntimeException(e);
         }
 
-        String[] parts = expressionModel.getExpression().split("(?<=[*+\\-/])|(?=[*+\\-/])");
+        String[] parts = expression.getExpression().split("(?<=[*+\\-/])|(?=[*+\\-/])");
         if (parts.length != 3) {
             throw new IllegalArgumentException("Invalid expression format");
         }
@@ -23,9 +23,9 @@ public class Calculator {
         double operand2 = Double.parseDouble(parts[2]);
         double calculationResult = getCalculationResult(parts, operand1, operand2);
 
-        expressionModel.setStatus(ExpressionModelStatus.COMPLETED);
-        expressionModel.setResult(calculationResult);
-        return expressionModel;
+        expression.setStatus(ExpressionStatus.COMPLETED);
+        expression.setResult(calculationResult);
+        return expression;
     }
 
 

@@ -1,6 +1,8 @@
 package net.sytes.kashey.consist.task3.client;
 
 import net.sytes.kashey.consist.task3.config.GitlabProperties;
+import net.sytes.kashey.consist.task3.dto.IntegrationDto;
+import net.sytes.kashey.consist.task3.mapper.NoteMapper;
 import net.sytes.kashey.consist.task3.model.Note;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
@@ -28,7 +30,8 @@ public class RestGitlabClient implements GitlabClient {
         if (note == null) {
             return false;
         }
-        HttpEntity<Map<String, String>> request = new HttpEntity<>(createRequestBody(note.body()), createHttpHeaders());
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(createRequestBody(NoteMapper.INSTANCE.ToDto(note)),
+                createHttpHeaders());
         try {
 
             ResponseEntity<String> responseEntity = restTemplate
@@ -44,9 +47,9 @@ public class RestGitlabClient implements GitlabClient {
         }
     }
 
-    private Map<String, String> createRequestBody(String body) {
+    private Map<String, String> createRequestBody(IntegrationDto dto) {
         Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("body", body);
+        requestBody.put("body", dto.body());
         return requestBody;
     }
 
