@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class CalcRequestService {
@@ -22,11 +24,20 @@ public class CalcRequestService {
 
     private final GitlabClient client;
 
+    private static final String REGEXP = "\\d+[+*\\-\\/]\\d+";
+
     public CalcRequestService(GitlabClient client) {
         this.client = client;
     }
 
     public String addExpression(String expression, boolean needLog) {
+
+        Pattern pattern = Pattern.compile(REGEXP);
+        Matcher matcher = pattern.matcher(expression);
+
+        if (!matcher.matches() || expression.isEmpty() || expression.isBlank()) {
+            return null;
+        }
 
         int id = idGenerator.incrementAndGet();
         Expression expressionModel = new Expression(id, expression, needLog);
@@ -92,10 +103,6 @@ public class CalcRequestService {
     }
 
     public boolean updateById(int id, String expression, boolean needLog) {
-
-        if (!expressionPool.containsKey(id)) {
-            return false;
-        }
 
         CompletableFuture<Expression> future = expressionPool.get(id);
 

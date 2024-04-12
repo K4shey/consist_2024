@@ -65,7 +65,7 @@ public class CalcRequestController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Expression> deleteById(@PathVariable(value = "id") int id,
                                                  @RequestParam(value = "needlog", required = false,
-            defaultValue = "false") boolean needLog) {
+                                                         defaultValue = "false") boolean needLog) {
         if (service.deleteById(id, needLog)) {
             return ResponseEntity.ok().build();
         } else {
@@ -82,7 +82,7 @@ public class CalcRequestController {
         if (service.updateById(id, URLEncoder.encode(expression, StandardCharsets.UTF_8), needLog)) {
             return ResponseEntity.ok().build();
         } else {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 }
