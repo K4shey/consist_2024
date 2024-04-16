@@ -9,8 +9,12 @@ import net.sytes.kashey.consist.task3.model.ExpressionStatus;
 import net.sytes.kashey.consist.task3.model.Note;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -19,7 +23,7 @@ import java.util.regex.Pattern;
 @Component
 public class CalcRequestService {
 
-    private final Map<Integer, CompletableFuture<Expression>> expressionPool = new HashMap<>();
+    private Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
     private final AtomicInteger idGenerator = new AtomicInteger(0);
 
     private final GitlabClient client;
@@ -28,6 +32,14 @@ public class CalcRequestService {
 
     public CalcRequestService(GitlabClient client) {
         this.client = client;
+    }
+
+    public Map<Integer, CompletableFuture<Expression>> getExpressionPool() {
+        return expressionPool;
+    }
+
+    public void setExpressionPool(Map<Integer, CompletableFuture<Expression>> expressionPool) {
+        this.expressionPool = expressionPool;
     }
 
     public String addExpression(String expression, boolean needLog) {
@@ -105,6 +117,10 @@ public class CalcRequestService {
     public boolean updateById(int id, String expression, boolean needLog) {
 
         CompletableFuture<Expression> future = expressionPool.get(id);
+
+        if (future == null) {
+            throw new IllegalArgumentException("No expression found with id " + id);
+        }
 
         if (future.isDone()) {
             Expression expressionToUpdate = new Expression(expression, needLog);

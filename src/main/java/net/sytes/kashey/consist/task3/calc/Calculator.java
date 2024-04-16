@@ -10,7 +10,7 @@ public class Calculator {
     public static Expression calculate(Expression expression) {
 
         try {
-            Thread.sleep(1000 * 30);
+            Thread.sleep(1000 * 3);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

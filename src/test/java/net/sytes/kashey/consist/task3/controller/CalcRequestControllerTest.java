@@ -71,7 +71,6 @@ class CalcRequestControllerTest {
         Expression completedExpressionWithResult = new Expression(1, "2+3", false,
                 ExpressionStatus.COMPLETED, 5.0);
 
-
         BDDMockito
                 .given(service.getResultById(1))
                 .willReturn(completedExpressionWithResult);
@@ -167,8 +166,6 @@ class CalcRequestControllerTest {
                         .param("needlog", "false"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk());
-
-
     }
 
     @Test
