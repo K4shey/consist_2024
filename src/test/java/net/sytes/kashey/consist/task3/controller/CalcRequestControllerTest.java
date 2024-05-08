@@ -40,7 +40,7 @@ class CalcRequestControllerTest {
     void add_ExpressionValid_ReturnStatusCreated_ExpressionIdInHeader() throws Exception {
 
         BDDMockito
-                .given(service.addExpression(URLEncoder.encode("2+3", StandardCharsets.UTF_8), false))
+                .given(service.addExpression(URLEncoder.encode("2+3", StandardCharsets.UTF_8), false, ""))
                 .willReturn("1");
 
         mockMvc.perform(post("/api/calcrequest")
@@ -55,7 +55,7 @@ class CalcRequestControllerTest {
     void add_ExpressionInvalid_ReturnStatusInternalServerError() throws Exception {
 
         BDDMockito
-                .given(service.addExpression(URLEncoder.encode("a+b", StandardCharsets.UTF_8), false))
+                .given(service.addExpression(URLEncoder.encode("a+b", StandardCharsets.UTF_8), false, ""))
                 .willReturn(null);
 
         mockMvc.perform(post("/api/calcrequest")
@@ -176,6 +176,28 @@ class CalcRequestControllerTest {
         mockMvc.perform(put("/api/calcrequest/999")
                         .param("expr", "3+7")
                         .param("needlog", "false"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateDescription_ExpressionFound_ReturnStatusOK() throws Exception {
+
+        BDDMockito.given(service.updateDescription(any(Integer.class), any(String.class))).willReturn(true);
+
+        mockMvc.perform(put("/api/calcrequest/1/description")
+                        .param("text", "Updated description"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void updateDescription_ExpressionNotFound_ReturnStatusNotFound() throws Exception {
+
+        BDDMockito.given(service.updateDescription(any(Integer.class), any(String.class))).willReturn(false);
+
+        mockMvc.perform(put("/api/calcrequest/999/description")
+                        .param("text", "Updated description"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound());
     }

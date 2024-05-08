@@ -7,7 +7,10 @@ import net.sytes.kashey.consist.task3.mapper.ExpressionMapper;
 import net.sytes.kashey.consist.task3.model.Expression;
 import net.sytes.kashey.consist.task3.model.ExpressionStatus;
 import net.sytes.kashey.consist.task3.model.Note;
-import org.springframework.stereotype.Component;
+import net.sytes.kashey.consist.task3.repository.ExpressionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,18 +23,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Component
+@Service
+@Transactional(readOnly = true)
 public class CalcRequestService {
 
     private Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
     private final AtomicInteger idGenerator = new AtomicInteger(0);
 
+    private final ExpressionRepository repository;
+
     private final GitlabClient client;
 
     private static final String REGEXP = "\\d+[+*\\-\\/]\\d+";
 
-    public CalcRequestService(GitlabClient client) {
+    @Autowired
+    public CalcRequestService(GitlabClient client, ExpressionRepository repository) {
         this.client = client;
+        this.repository = repository;
     }
 
     public Map<Integer, CompletableFuture<Expression>> getExpressionPool() {
@@ -42,7 +50,8 @@ public class CalcRequestService {
         this.expressionPool = expressionPool;
     }
 
-    public String addExpression(String expression, boolean needLog) {
+    @Transactional
+    public String addExpression(String expression, boolean needLog, String description) {
 
         Pattern pattern = Pattern.compile(REGEXP);
         Matcher matcher = pattern.matcher(expression);
@@ -53,12 +62,22 @@ public class CalcRequestService {
 
         int id = idGenerator.incrementAndGet();
         Expression expressionModel = new Expression(id, expression, needLog);
+        expressionModel.setDescription(description);
 
         CompletableFuture<Expression> future = CompletableFuture.supplyAsync(() -> Calculator.calculate(expressionModel));
         expressionPool.put(id, future);
         if (needLog) {
             client.addNote(new Note("Expression " + expression + ", id=" + id + " was added to pool"));
         }
+
+        future.thenAcceptAsync(expr -> {
+            Expression savedExpression = repository.save(expr);
+            if (needLog) {
+                client.addNote(new Note("Expression " + savedExpression.getExpression() + ", id=" + savedExpression.getId()
+                                        + " was calculated and saved to repository with result = " + savedExpression.getResult()));
+            }
+        });
+
         return String.valueOf(id);
     }
 
@@ -131,6 +150,18 @@ public class CalcRequestService {
                 client.addNote(new Note("Expression " + expressionToUpdate.getExpression() + ", id=" + id
                                         + " was updated and added back to the pool"));
             }
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional
+    public boolean updateDescription(int id, String newDescription) {
+        Optional<Expression> optionalExpression = repository.findById(id);
+        if (optionalExpression.isPresent()) {
+            Expression expression = optionalExpression.get();
+            expression.setDescription(newDescription);
+            repository.save(expression);
             return true;
         }
         return false;

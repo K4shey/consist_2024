@@ -6,6 +6,7 @@ import net.sytes.kashey.consist.task3.dto.ExpressionDto;
 import net.sytes.kashey.consist.task3.model.Expression;
 import net.sytes.kashey.consist.task3.model.ExpressionStatus;
 import net.sytes.kashey.consist.task3.model.Note;
+import net.sytes.kashey.consist.task3.repository.ExpressionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -30,12 +32,14 @@ class CalcRequestServiceTest {
     @Mock
     private RestGitlabClient gitlabClient;
 
+    @Mock
+    private ExpressionRepository repository;
 
     private CalcRequestService service;
 
     @BeforeEach
     void setUp() {
-        this.service = new CalcRequestService(gitlabClient);
+        this.service = new CalcRequestService(gitlabClient, repository);
     }
 
     @Test
@@ -43,14 +47,14 @@ class CalcRequestServiceTest {
 
         when(gitlabClient.addNote(any(Note.class))).thenReturn(true);
 
-        assertThat(service.addExpression("2+3", true)).isNotNull();
+        assertThat(service.addExpression("2+3", true, "")).isNotNull();
     }
 
 
     @Test
     void addExpression_InvalidExpression_ReturnsNull() {
 
-        assertThat(service.addExpression("a+b", false)).isNull();
+        assertThat(service.addExpression("a+b", false, "")).isNull();
     }
 
     @Test
@@ -130,7 +134,7 @@ class CalcRequestServiceTest {
     }
 
     @Test
-    void testGetAllExpressions_ExceptionThrown() throws InterruptedException, ExecutionException {
+    void testGetAllExpressions_ExceptionThrown() {
 
         CompletableFuture<Expression> exceptionFuture = new CompletableFuture<>();
         exceptionFuture.completeExceptionally(new InterruptedException("Test exception"));
@@ -139,9 +143,7 @@ class CalcRequestServiceTest {
         expressionPool.put(1, exceptionFuture);
         service.setExpressionPool(expressionPool);
 
-        assertThrows(RuntimeException.class, () -> {
-            service.getAllExpressions();
-        });
+        assertThrows(RuntimeException.class, () -> service.getAllExpressions());
     }
 
 
@@ -201,5 +203,31 @@ class CalcRequestServiceTest {
     void updateById_ExpressionNotFound_ThrowsIllegalArgumentException() {
 
         assertThrows(IllegalArgumentException.class, () -> service.updateById(1, "2+3", true));
+    }
+
+    @Test
+    void updateDescription_ReturnsTrueIfExpressionFound() {
+
+        Expression expression = new Expression(1, "2 + 3", false);
+        Optional<Expression> optionalExpression = Optional.of(expression);
+        when(repository.findById(1)).thenReturn(optionalExpression);
+        when(repository.save(expression)).thenReturn(expression);
+
+        assertThat(service.updateDescription(1, "New description")).isTrue();
+
+        verify(repository, times(1)).findById(1);
+        verify(repository, times(1)).save(expression);
+    }
+
+    @Test
+    void updateDescription_ReturnsFalseIfExpressionNotFound() {
+
+        Optional<Expression> optionalExpression = Optional.empty();
+        when(repository.findById(1)).thenReturn(optionalExpression);
+
+        assertThat(service.updateDescription(1, "New description")).isFalse();
+
+        verify(repository, times(1)).findById(1);
+        verify(repository, never()).save(any(Expression.class));
     }
 }
