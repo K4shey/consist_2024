@@ -32,7 +32,7 @@ class CalcRequestIntegrationTest {
         webTestClient.post().uri("/api/calcrequest?expr=2+2&needlog=true")
                 .exchange();
 
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(3, TimeUnit.SECONDS)
                 .untilAsserted(() ->
                         webTestClient.get().uri("/api/calcrequest/1")
                                 .exchange()

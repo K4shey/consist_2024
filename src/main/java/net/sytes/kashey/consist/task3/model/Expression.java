@@ -1,12 +1,24 @@
 package net.sytes.kashey.consist.task3.model;
 
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "expressions")
 public class Expression {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String expression;
+    @Enumerated(EnumType.STRING)
     private ExpressionStatus status;
+
+    @Column(name = "log")
     private boolean needLog;
     private double result;
+
+    private String description;
 
     public Expression() {
         this.status = ExpressionStatus.IN_PROGRESS;
@@ -65,5 +77,13 @@ public class Expression {
 
     public void setResult(double result) {
         this.result = result;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

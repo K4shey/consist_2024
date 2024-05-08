@@ -29,9 +29,11 @@ public class CalcRequestController {
     @PostMapping
     public ResponseEntity<String> add(@RequestParam(value = "expr") String expression,
                                       @RequestParam(value = "needlog", required = false,
-                                              defaultValue = "false") boolean needLog) {
+                                              defaultValue = "false") boolean needLog,
+                                      @RequestParam(value = "description", required = false,
+                                              defaultValue = "") String description) {
 
-        String newExpressionId = service.addExpression(URLEncoder.encode(expression, StandardCharsets.UTF_8), needLog);
+        String newExpressionId = service.addExpression(URLEncoder.encode(expression, StandardCharsets.UTF_8), needLog, description);
         if (newExpressionId != null) {
             HttpHeaders headers = new HttpHeaders();
             headers.add("Location", "/api/calcrequest/" + newExpressionId);
@@ -83,6 +85,16 @@ public class CalcRequestController {
             return ResponseEntity.ok().build();
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PutMapping("/{id}/description")
+    public ResponseEntity<Void> updateDescription(@PathVariable("id") int id,
+                                                  @RequestParam(value = "text") String newDescription) {
+        if (service.updateDescription(id, newDescription)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
 }

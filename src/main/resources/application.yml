@@ -5,5 +5,14 @@ gitlab:
 spring:
   application:
     name: task3
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 server:
   port: 8090
