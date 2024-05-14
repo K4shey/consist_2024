@@ -1,7 +1,3 @@
-gitlab:
-  token:
-  project: 55606763
-  issue: 3
 spring:
   application:
     name: task3

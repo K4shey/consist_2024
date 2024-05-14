@@ -35,15 +35,17 @@ public class Expression {
         this.needLog = needLog;
     }
 
-    public Expression(int id, String expression, boolean needLog) {
-        this(expression, needLog);
-        this.id = id;
-    }
-
     public Expression(int id, String expression, boolean needLog, ExpressionStatus status, Double result) {
         this(expression, needLog);
         this.id = id;
         this.status = status;
+        this.result = result;
+    }
+
+    public Expression(String expression, boolean needLog, ExpressionStatus status, double result) {
+        this.expression = expression;
+        this.status = status;
+        this.needLog = needLog;
         this.result = result;
     }
 
@@ -85,5 +87,9 @@ public class Expression {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void setExpression(String expression) {
+        this.expression = expression;
     }
 }
