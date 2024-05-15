@@ -41,9 +41,8 @@ public class CalcRequestController {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .headers(headers)
                     .build();
-        } else {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @GetMapping("/{id}")
@@ -70,9 +69,8 @@ public class CalcRequestController {
                                                          defaultValue = "false") boolean needLog) {
         if (service.deleteById(id, needLog)) {
             return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{id}")
@@ -83,9 +81,8 @@ public class CalcRequestController {
 
         if (service.updateById(id, URLEncoder.encode(expression, StandardCharsets.UTF_8), needLog)) {
             return ResponseEntity.ok().build();
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PutMapping("/{id}/description")
@@ -93,8 +90,7 @@ public class CalcRequestController {
                                                   @RequestParam(value = "text") String newDescription) {
         if (service.updateDescription(id, newDescription)) {
             return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.notFound().build();
     }
 }

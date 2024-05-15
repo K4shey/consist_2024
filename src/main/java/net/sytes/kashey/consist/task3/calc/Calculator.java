@@ -23,9 +23,8 @@ public class Calculator {
         double operand2 = Double.parseDouble(parts[2]);
         double calculationResult = getCalculationResult(parts, operand1, operand2);
 
-        expression.setStatus(ExpressionStatus.COMPLETED);
-        expression.setResult(calculationResult);
-        return expression;
+        return new Expression(expression.getId(), expression.getExpression(), expression.isNeedLog(),
+                ExpressionStatus.COMPLETED, calculationResult, expression.getDescription());
     }
 
 

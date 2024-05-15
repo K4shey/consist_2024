@@ -65,14 +65,21 @@ class ExpressionRepositoryTest {
 
         Expression savedExpression = repository.save(
                 new Expression("2+2", false, ExpressionStatus.COMPLETED, 4.0));
-
         Expression expressionToUpdate = repository.findById(savedExpression.getId()).orElse(null);
         assert expressionToUpdate != null;
-        expressionToUpdate.setDescription("Addition of 2 and 2");
-        Expression updatedExpression = repository.save(expressionToUpdate);
+        Expression updatedExpression = new Expression(
+                expressionToUpdate.getId(),
+                expressionToUpdate.getExpression(),
+                expressionToUpdate.isNeedLog(),
+                expressionToUpdate.getStatus(),
+                expressionToUpdate.getResult(),
+                "Addition of 2 and 2"
+        );
 
-        assertThat(updatedExpression).isNotNull();
-        assertThat(updatedExpression.getDescription()).isEqualTo("Addition of 2 and 2");
+        Expression resultExpression = repository.save(updatedExpression);
+
+        assertThat(resultExpression).isNotNull();
+        assertThat(resultExpression.getDescription()).isEqualTo("Addition of 2 and 2");
     }
 
     @Test

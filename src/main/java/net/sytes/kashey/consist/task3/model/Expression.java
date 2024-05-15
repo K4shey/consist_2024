@@ -2,6 +2,8 @@ package net.sytes.kashey.consist.task3.model;
 
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @Entity
 @Table(name = "expressions")
@@ -11,7 +13,9 @@ public class Expression {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String expression;
+
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     private ExpressionStatus status;
 
     @Column(name = "log")
@@ -35,11 +39,21 @@ public class Expression {
         this.needLog = needLog;
     }
 
-    public Expression(int id, String expression, boolean needLog, ExpressionStatus status, Double result) {
+    public Expression(String expression, boolean needLog, String description) {
+        this();
+        this.expression = expression;
+        this.needLog = needLog;
+        this.description = description;
+    }
+
+
+    public Expression(int id, String expression, boolean needLog, ExpressionStatus status, double result,
+                      String description) {
         this(expression, needLog);
         this.id = id;
         this.status = status;
         this.result = result;
+        this.description = description;
     }
 
     public Expression(String expression, boolean needLog, ExpressionStatus status, double result) {
@@ -47,6 +61,16 @@ public class Expression {
         this.status = status;
         this.needLog = needLog;
         this.result = result;
+        this.description = "";
+    }
+
+
+    public Expression(String expression, boolean needLog, ExpressionStatus status, double result, String description) {
+        this.expression = expression;
+        this.status = status;
+        this.needLog = needLog;
+        this.result = result;
+        this.description = description;
     }
 
     public String getExpression() {
@@ -65,31 +89,11 @@ public class Expression {
         return result;
     }
 
-    public void setStatus(ExpressionStatus status) {
-        this.status = status;
-    }
-
     public int getId() {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public void setResult(double result) {
-        this.result = result;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setExpression(String expression) {
-        this.expression = expression;
     }
 }

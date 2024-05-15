@@ -68,8 +68,8 @@ class CalcRequestControllerTest {
     @Test
     void getResultById_ExpressionFound_StatusCompleted_ReturnResult() throws Exception {
 
-        Expression completedExpressionWithResult = new Expression(1, "2+3", false,
-                ExpressionStatus.COMPLETED, 5.0);
+        Expression completedExpressionWithResult = new Expression("2+3", false,
+                ExpressionStatus.COMPLETED, 5.0,"");
 
         BDDMockito
                 .given(service.getResultById(1))

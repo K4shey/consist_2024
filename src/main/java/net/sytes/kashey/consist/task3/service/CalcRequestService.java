@@ -26,8 +26,6 @@ public class CalcRequestService {
 
     private final GitlabClient client;
 
-    private static final String REGEXP = "\\d+[+*\\-\\/]\\d+";
-
     @Autowired
     public CalcRequestService(GitlabClient client, ExpressionRepository repository) {
         this.client = client;
@@ -37,15 +35,14 @@ public class CalcRequestService {
     @Transactional
     public String addExpression(String expression, boolean needLog, String description) {
 
-        Pattern pattern = Pattern.compile(REGEXP);
+        Pattern pattern = Pattern.compile("\\d+[+*\\-\\/]\\d+");
         Matcher matcher = pattern.matcher(expression);
 
         if (!matcher.matches() || expression.isEmpty() || expression.isBlank()) {
             return null;
         }
 
-        Expression expressionModel = new Expression(expression, needLog);
-        expressionModel.setDescription(description);
+        Expression expressionModel = new Expression(expression, needLog, description);
         Expression savedExpr = repository.save(expressionModel);
 
         if (savedExpr == null) {
@@ -80,9 +77,8 @@ public class CalcRequestService {
                         + " was successfully calculated. Result = " + expression.getResult()));
             }
             return expression;
-        } else {
-            return null;
         }
+        return null;
     }
 
     public List<ExpressionDto> getAllExpressions() {
@@ -102,39 +98,39 @@ public class CalcRequestService {
                 client.addNote(new Note("Expression with id=" + id + " was successfully removed"));
             }
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
-    public boolean updateById(int id, String expression, boolean needLog) {
+    public boolean updateById(int id, String newExpression, boolean needLog) {
 
         Optional<Expression> optionalExpression = repository.findById(id);
         if (optionalExpression.isPresent()) {
-            Expression expr = optionalExpression.get();
-            expr.setExpression(expression);
-            CompletableFuture<Expression> future = CompletableFuture.supplyAsync(() -> Calculator.calculate(expr));
-            future.thenAcceptAsync(updatedExpr -> {
-                updatedExpr.setId(id);
-                repository.save(updatedExpr);
+            Expression existingExpression = optionalExpression.get();
+            Expression updatedExpr = new Expression(existingExpression.getId(), newExpression,
+                    existingExpression.isNeedLog(), existingExpression.getStatus(),
+                    existingExpression.getResult(), existingExpression.getDescription());
+            CompletableFuture<Expression> future = CompletableFuture.supplyAsync(() -> Calculator.calculate(updatedExpr));
+            future.thenAcceptAsync(updExpr -> {
+                repository.save(updExpr);
                 if (needLog) {
-                    client.addNote(new Note("Expression " + updatedExpr.getExpression() + ", id=" + id
+                    client.addNote(new Note("Expression " + updExpr.getExpression() + ", id=" + id
                             + " was updated and added back to the pool"));
                 }
             });
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Transactional
     public boolean updateDescription(int id, String newDescription) {
         Optional<Expression> optionalExpression = repository.findById(id);
         if (optionalExpression.isPresent()) {
-            Expression expression = optionalExpression.get();
-            expression.setDescription(newDescription);
-            repository.save(expression);
+            Expression existingExpression = optionalExpression.get();
+            Expression updatedExpression = new Expression(existingExpression.getId(), existingExpression.getExpression(),
+                    existingExpression.isNeedLog(), existingExpression.getStatus(), existingExpression.getResult(), newDescription);
+            repository.save(updatedExpression);
             return true;
         }
         return false;
