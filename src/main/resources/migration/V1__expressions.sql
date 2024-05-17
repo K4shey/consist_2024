@@ -6,7 +6,7 @@ CREATE TABLE expressions -- таблица содержит информацию
 (
     id          SERIAL PRIMARY KEY, -- идентификатор выражения
     description VARCHAR(255), -- произвольное описание
-    expression  VARCHAR(255), -- текст самого выражения
+    expression  VARCHAR(255) NOT NULL, -- текст самого выражения
     log         BOOLEAN, -- признак того, что требуется логирование
     result      DOUBLE PRECISION NOT NULL, -- результат вычисления
     status      EXPRESSIONSTATUS DEFAULT 'IN_PROGRESS' -- статус выражения по-умолчанию: в процессе вычисления

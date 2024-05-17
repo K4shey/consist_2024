@@ -85,7 +85,7 @@ public class CalcRequestController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PutMapping("/{id}/description")
+    @PutMapping("/{id}/descriptions")
     public ResponseEntity<Void> updateDescription(@PathVariable("id") int id,
                                                   @RequestParam(value = "text") String newDescription) {
         if (service.updateDescription(id, newDescription)) {
