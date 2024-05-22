@@ -46,12 +46,12 @@ public class CalcRequestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Expression> getResultById(@PathVariable(value = "id") int id) {
-        Expression result = service.getResultById(id);
+    public ResponseEntity<ExpressionDto> getResultById(@PathVariable(value = "id") int id) {
+        ExpressionDto result = service.getResultById(id);
         if (result != null) {
-            if (result.getStatus() == ExpressionStatus.COMPLETED) {
+            if (result.status() == ExpressionStatus.COMPLETED) {
                 return ResponseEntity.ok(result);
-            } else if (result.getStatus() == ExpressionStatus.IN_PROGRESS) {
+            } else if (result.status() == ExpressionStatus.IN_PROGRESS) {
                 return new ResponseEntity<>(HttpStatus.ACCEPTED);
             }
         }

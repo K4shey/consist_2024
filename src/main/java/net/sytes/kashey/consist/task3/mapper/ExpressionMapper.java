@@ -9,5 +9,5 @@ import org.mapstruct.factory.Mappers;
 public interface ExpressionMapper {
     ExpressionMapper INSTANCE = Mappers.getMapper(ExpressionMapper.class);
 
-    ExpressionDto ToDto(Expression model);
+    ExpressionDto toDto(Expression model);
 }

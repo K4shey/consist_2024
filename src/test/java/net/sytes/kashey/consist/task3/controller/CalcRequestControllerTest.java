@@ -2,7 +2,6 @@ package net.sytes.kashey.consist.task3.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sytes.kashey.consist.task3.dto.ExpressionDto;
-import net.sytes.kashey.consist.task3.model.Expression;
 import net.sytes.kashey.consist.task3.model.ExpressionStatus;
 import net.sytes.kashey.consist.task3.service.CalcRequestService;
 import org.junit.jupiter.api.Test;
@@ -68,24 +67,24 @@ class CalcRequestControllerTest {
     @Test
     void getResultById_ExpressionFound_StatusCompleted_ReturnResult() throws Exception {
 
-        Expression completedExpressionWithResult = new Expression("2+3", false,
-                ExpressionStatus.COMPLETED, 5.0,"");
+        ExpressionDto completedExpressionDto = new ExpressionDto(1, ExpressionStatus.COMPLETED);
 
         BDDMockito
                 .given(service.getResultById(1))
-                .willReturn(completedExpressionWithResult);
+                .willReturn(completedExpressionDto);
 
         mockMvc.perform(get("/api/calcrequest/1")
                         .param("expr", "2+3"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().string(objectMapper.writeValueAsString(completedExpressionWithResult)));
+                .andExpect(content().string(objectMapper.writeValueAsString(completedExpressionDto)));
     }
 
     @Test
     void getResultById_ExpressionFound_StatusInProgress_ReturnStatusAccepted() throws Exception {
-        Expression expressionCalculationInProgress = new Expression("2+3");
+
+        ExpressionDto expressionCalculationInProgress = new ExpressionDto(1, ExpressionStatus.IN_PROGRESS);
 
         BDDMockito
                 .given(service.getResultById(1))
@@ -185,7 +184,7 @@ class CalcRequestControllerTest {
 
         BDDMockito.given(service.updateDescription(any(Integer.class), any(String.class))).willReturn(true);
 
-        mockMvc.perform(put("/api/calcrequest/1/description")
+        mockMvc.perform(put("/api/calcrequest/1/descriptions")
                         .param("text", "Updated description"))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk());

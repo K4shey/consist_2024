@@ -67,7 +67,7 @@ public class CalcRequestService {
         return String.valueOf(id);
     }
 
-    public Expression getResultById(int id) {
+    public ExpressionDto getResultById(int id) {
 
         Optional<Expression> optionalExpression = repository.findById(id);
         if (optionalExpression.isPresent()) {
@@ -76,7 +76,7 @@ public class CalcRequestService {
                 client.addNote(new Note("Expression " + expression.getExpression() + ", id=" + id
                         + " was successfully calculated. Result = " + expression.getResult()));
             }
-            return expression;
+            return ExpressionMapper.INSTANCE.toDto(expression);
         }
         return null;
     }
@@ -85,7 +85,7 @@ public class CalcRequestService {
 
         List<Expression> expressions = repository.findAll();
         return expressions.stream()
-                .map(ExpressionMapper.INSTANCE::ToDto)
+                .map(ExpressionMapper.INSTANCE::toDto)
                 .collect(Collectors.toList());
     }
 
