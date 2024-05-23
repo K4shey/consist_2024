@@ -4,6 +4,9 @@ import net.sytes.kashey.consist.task3.model.Expression;
 import net.sytes.kashey.consist.task3.model.ExpressionStatus;
 import org.springframework.stereotype.Component;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Component
 public class Calculator {
 
@@ -13,6 +16,13 @@ public class Calculator {
             Thread.sleep(1000 * 3);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }
+
+        Pattern pattern = Pattern.compile("\\d+[+*\\-\\/]\\d+");
+        Matcher matcher = pattern.matcher(expression.getExpression());
+
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid expression format");
         }
 
         String[] parts = expression.getExpression().split("(?<=[*+\\-/])|(?=[*+\\-/])");

@@ -14,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,28 +24,20 @@ public class CalcRequestService {
 
     private final GitlabClient client;
 
+    private final ExpressionMapper mapper;
+
     @Autowired
-    public CalcRequestService(GitlabClient client, ExpressionRepository repository) {
+    public CalcRequestService(GitlabClient client, ExpressionRepository repository, ExpressionMapper mapper) {
         this.client = client;
         this.repository = repository;
+        this.mapper = mapper;
     }
 
     @Transactional
     public String addExpression(String expression, boolean needLog, String description) {
 
-        Pattern pattern = Pattern.compile("\\d+[+*\\-\\/]\\d+");
-        Matcher matcher = pattern.matcher(expression);
-
-        if (!matcher.matches() || expression.isEmpty() || expression.isBlank()) {
-            return null;
-        }
-
         Expression expressionModel = new Expression(expression, needLog, description);
         Expression savedExpr = repository.save(expressionModel);
-
-        if (savedExpr == null) {
-            throw new RuntimeException("Failed to save expression");
-        }
 
         int id = savedExpr.getId();
 
@@ -60,8 +50,8 @@ public class CalcRequestService {
             Expression savedExpression = repository.save(expr);
             if (needLog) {
                 client.addNote(new Note("Expression " + savedExpression.getExpression() + ", id="
-                        + savedExpression.getId() + " was calculated and saved to repository with result = "
-                        + savedExpression.getResult()));
+                                        + savedExpression.getId() + " was calculated and saved to repository with result = "
+                                        + savedExpression.getResult()));
             }
         });
         return String.valueOf(id);
@@ -74,9 +64,9 @@ public class CalcRequestService {
             Expression expression = optionalExpression.get();
             if (expression.isNeedLog()) {
                 client.addNote(new Note("Expression " + expression.getExpression() + ", id=" + id
-                        + " was successfully calculated. Result = " + expression.getResult()));
+                                        + " was successfully calculated. Result = " + expression.getResult()));
             }
-            return ExpressionMapper.INSTANCE.toDto(expression);
+            return mapper.toDto(expression);
         }
         return null;
     }
@@ -85,7 +75,7 @@ public class CalcRequestService {
 
         List<Expression> expressions = repository.findAll();
         return expressions.stream()
-                .map(ExpressionMapper.INSTANCE::toDto)
+                .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -115,7 +105,7 @@ public class CalcRequestService {
                 repository.save(updExpr);
                 if (needLog) {
                     client.addNote(new Note("Expression " + updExpr.getExpression() + ", id=" + id
-                            + " was updated and added back to the pool"));
+                                            + " was updated and added back to the pool"));
                 }
             });
             return true;
