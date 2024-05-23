@@ -1,6 +1,7 @@
 package net.sytes.kashey.consist.task3.it;
 
 import net.sytes.kashey.consist.task3.repository.ExpressionRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,11 @@ public class CalcRequestIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        repository.deleteAll();
+    }
+
+    @AfterEach
+    void tearDown() {
         repository.deleteAll();
     }
 

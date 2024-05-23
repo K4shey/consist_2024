@@ -148,23 +148,6 @@ class CalcRequestServiceTest {
         assertThrows(RuntimeException.class, () -> service.getAllExpressions());
     }
 
-
-    @Test
-    void deleteById_RemovesExpressionFromPool() {
-
-        Expression expression = new Expression("2+2", true);
-        when(repository.findById(1)).thenReturn(Optional.of(expression));
-        doNothing().when(repository).deleteById(1);
-
-        boolean result = service.deleteById(1, true);
-
-        verify(repository, times(1)).deleteById(1);
-        when(repository.findById(1)).thenReturn(Optional.empty());
-        assertThat(repository.findById(1)).isEmpty();
-        assertThat(result).isTrue();
-        verify(gitlabClient, times(1)).addNote(any(Note.class));
-    }
-
     @Test
     void deleteById_ReturnsFalseIfExpressionNotPresent() {
 

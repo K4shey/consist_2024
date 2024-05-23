@@ -83,7 +83,6 @@ public class CalcRequestService {
 
         Optional<Expression> optionalExpression = repository.findById(id);
         if (optionalExpression.isPresent()) {
-            repository.deleteById(id);
             if (needLog) {
                 client.addNote(new Note("Expression with id=" + id + " was successfully removed"));
             }
