@@ -41,7 +41,15 @@ public class CalcRequestIntegrationTest {
     @Test
     void testAddExpression() {
 
-        webTestClient.post().uri("/api/calcrequest?expr=2+2&needlog=true")
+        webTestClient.post().uri("/api/calcrequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                            "expression": "2+2",
+                            "needLog": true,
+                            "description": ""
+                        }
+                        """)
                 .exchange()
                 .expectStatus().isCreated();
     }
@@ -49,7 +57,18 @@ public class CalcRequestIntegrationTest {
     @Test
     void testGetResultById() {
 
-        webTestClient.post().uri("/api/calcrequest?expr=2+2&needlog=true")
+        String jsonRequest = """
+                {
+                    "expression": "2*2",
+                    "needLog": true,
+                    "status": "IN_PROGRESS",
+                    "description": ""
+                }
+                """;
+
+        webTestClient.post().uri("/api/calcrequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(jsonRequest)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectHeader().exists("Location")
@@ -74,20 +93,41 @@ public class CalcRequestIntegrationTest {
     @Test
     void testGetAllExpressions() {
 
-        webTestClient.post().uri("/api/calcrequest?expr=2+2&needlog=true")
-                .exchange();
+        String jsonRequest = """
+                {
+                    "expression": "2+2",
+                    "needLog": true,
+                    "status": "IN_PROGRESS",
+                    "description": ""
+                }
+                """;
+
+        webTestClient.post().uri("/api/calcrequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(jsonRequest)
+                .exchange()
+                .expectStatus().isCreated();
 
         webTestClient.get().uri("/api/calcrequest")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$[0].status").exists();
+
     }
 
     @Test
     void testDeleteById() {
 
-        String id = webTestClient.post().uri("/api/calcrequest?expr=2+2&needlog=true")
+        String id = webTestClient.post().uri("/api/calcrequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                            "expression": "2+2",
+                            "needLog": true,
+                            "description": ""
+                        }
+                        """)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectHeader().exists("Location")
@@ -103,22 +143,30 @@ public class CalcRequestIntegrationTest {
     @Test
     void testUpdateById() {
 
-        webTestClient.post().uri("/api/calcrequest?expr=2+2&needlog=false")
+        String id = webTestClient.post().uri("/api/calcrequest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                            "expression": "2+2",
+                            "needLog": false,
+                            "description": ""
+                        }
+                        """)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectHeader().exists("Location")
-                .expectBody()
-                .consumeWith(response -> {
-                    String location = response.getResponseHeaders().getFirst(HttpHeaders.LOCATION);
-                    assertNotNull(location);
+                .returnResult(String.class)
+                .getResponseHeaders().getFirst("Location");
 
-                    String[] parts = location.split("/");
-                    String id = parts[parts.length - 1];
-
-                    webTestClient.put().uri("/api/calcrequest/{id}?expr=3+2&needlog=false", id)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .exchange()
-                            .expectStatus().isOk();
-                });
+        assert id != null;
+        webTestClient.put().uri(id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                            "description": "Updated description"
+                        }
+                        """)
+                .exchange()
+                .expectStatus().isOk();
     }
 }

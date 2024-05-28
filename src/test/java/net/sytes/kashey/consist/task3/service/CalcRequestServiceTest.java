@@ -12,8 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.BDDMockito;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -104,33 +104,101 @@ class CalcRequestServiceTest {
     @Test
     void getResultById_CalculationInProgress() {
 
-        Expression inProgressExpression = new Expression(1, "dummy", true, ExpressionStatus.IN_PROGRESS, 0.0, "");
-        ExpressionDto inProgressExpressionDto = new ExpressionDto(1, ExpressionStatus.IN_PROGRESS);
+        Expression inProgressExpression = new Expression(
+                1,
+                "dummy",
+                true,
+                ExpressionStatus.IN_PROGRESS,
+                0.0,
+                ""
+        );
+        ExpressionDto inProgressExpressionDto = new ExpressionDto(
+//                1,
+                "dummy",
+                true,
+                ExpressionStatus.IN_PROGRESS,
+                ""
+        );
         when(repository.findById(1)).thenReturn(Optional.of(inProgressExpression));
         when(mapper.toDto(inProgressExpression)).thenReturn(inProgressExpressionDto);
 
         ExpressionDto result = service.getResultById(1);
 
         assertThat(result).isNotNull();
-        assertThat(result.id()).isEqualTo(1);
+//        assertThat(result.id()).isEqualTo(1);
         assertThat(result.status()).isEqualTo(ExpressionStatus.IN_PROGRESS);
     }
 
     @Test
     void getAllExpressions_ReturnsCorrectList() {
 
-        Expression expression1 = new Expression(1, "2+3", true, ExpressionStatus.COMPLETED, 5.0, "");
-        Expression expression2 = new Expression(2, "4*5", false, ExpressionStatus.COMPLETED, 20.0, "");
-        Expression expression3 = new Expression(3, "6-1", false, ExpressionStatus.IN_PROGRESS, 0.0, "");
+        Expression expression1 = new Expression(
+                1,
+                "2+3",
+                true,
+                ExpressionStatus.COMPLETED,
+                5.0,
+                ""
+        );
+        Expression expression2 = new Expression(2,
+                "4*5",
+                false,
+                ExpressionStatus.COMPLETED,
+                20.0,
+                ""
+        );
+        Expression expression3 = new Expression(
+                3,
+                "6-1",
+                false,
+                ExpressionStatus.IN_PROGRESS,
+                0.0,
+                ""
+        );
         List<Expression> expressions = Arrays.asList(expression1, expression2, expression3);
         when(repository.findAll()).thenReturn(expressions);
-        when(mapper.toDto(expression1)).thenReturn(new ExpressionDto(1, ExpressionStatus.COMPLETED));
-        when(mapper.toDto(expression2)).thenReturn(new ExpressionDto(2, ExpressionStatus.COMPLETED));
-        when(mapper.toDto(expression3)).thenReturn(new ExpressionDto(3, ExpressionStatus.IN_PROGRESS));
+        when(mapper.toDto(expression1)).thenReturn(new ExpressionDto(
+//                1,
+                "2+3",
+                true,
+                ExpressionStatus.COMPLETED,
+                ""
+        ));
+        when(mapper.toDto(expression2)).thenReturn(new ExpressionDto(
+//                2,
+                "4*5",
+                false,
+                ExpressionStatus.COMPLETED,
+                ""
+        ));
+        when(mapper.toDto(expression3)).thenReturn(new ExpressionDto(
+//                3,
+                "6-1",
+                false,
+                ExpressionStatus.IN_PROGRESS,
+                ""));
         List<ExpressionDto> expectedResults = Arrays.asList(
-                new ExpressionDto(1, ExpressionStatus.COMPLETED),
-                new ExpressionDto(2, ExpressionStatus.COMPLETED),
-                new ExpressionDto(3, ExpressionStatus.IN_PROGRESS)
+                new ExpressionDto(
+//                        1,
+                        "2+3",
+                        true,
+                        ExpressionStatus.COMPLETED,
+                        ""
+                ),
+                new ExpressionDto(
+//                        2,
+                        "4*5",
+                        false,
+                        ExpressionStatus.COMPLETED,
+                        ""
+                ),
+                new ExpressionDto(
+//                        3,
+                        "6-1",
+                        false,
+                        ExpressionStatus.IN_PROGRESS,
+                        ""
+                )
         );
 
         List<ExpressionDto> result = service.getAllExpressions();
@@ -159,53 +227,41 @@ class CalcRequestServiceTest {
         verify(gitlabClient, never()).addNote(any(Note.class));
     }
 
+
     @Test
-    void updateById_ReturnsTrueAndUpdateExpression() {
+    void deleteById_ExpressionFound_WithLogging() {
 
-        Expression originalExpression = new Expression("2+3", false);
-        Expression updatedExpression = new Expression("5+7", false);
-        when(repository.findById(1)).thenReturn(Optional.of(originalExpression));
+        Expression existingExpression = new Expression(1, "2+2", true, ExpressionStatus.IN_PROGRESS, 4.0, "");
+        BDDMockito.given(repository.findById(1)).willReturn(Optional.of(existingExpression));
 
-        boolean result = service.updateById(1, "5+7", false);
+        boolean result = service.deleteById(1, true);
 
-        assertThat(updatedExpression.getExpression()).isEqualTo("5+7");
         assertThat(result).isTrue();
+        verify(gitlabClient, times(1)).addNote(
+                argThat(note -> note.body().contains("Expression with id=1 was successfully removed"))
+        );
     }
 
     @Test
-    void updateById_ReturnsFalseIfExpressionNotFound() {
+    void updateById_ExpressionFound_UpdatesDescription() {
 
-        when(repository.findById(1)).thenReturn(Optional.empty());
-
-        boolean result = service.updateById(1, "2+3", true);
-
-        assertThat(result).isFalse();
-    }
-
-
-    @Test
-    void updateDescription_ExistingExpression_SuccessfulUpdate() {
-
-        Expression existingExpression = new Expression("2+3", true, "Old Description");
+        Expression existingExpression = new Expression(1, "2+2", true, ExpressionStatus.COMPLETED,
+                4.0, "");
         when(repository.findById(1)).thenReturn(Optional.of(existingExpression));
 
-        boolean result = service.updateDescription(1, "New Description");
+        boolean result = service.updateById(1, "Updated description");
 
         assertThat(result).isTrue();
-        ArgumentCaptor<Expression> expressionCaptor = ArgumentCaptor.forClass(Expression.class);
-        verify(repository).save(expressionCaptor.capture());
-        Expression capturedExpression = expressionCaptor.getValue();
-        assertThat(capturedExpression.getDescription()).isEqualTo("New Description");
+        assertThat(existingExpression.getDescription()).isEqualTo("Updated description");
     }
 
     @Test
-    void updateDescription_NonExistingExpression_UnsuccessfulUpdate() {
-
+    void updateById_ExpressionNotFound_ReturnsFalse() {
         when(repository.findById(1)).thenReturn(Optional.empty());
 
-        boolean result = service.updateDescription(1, "New Description");
+        boolean result = service.updateById(1, "Updated description");
 
         assertThat(result).isFalse();
-        verify(repository, Mockito.never()).save(Mockito.any());
+        verify(repository, never()).save(any(Expression.class));
     }
 }

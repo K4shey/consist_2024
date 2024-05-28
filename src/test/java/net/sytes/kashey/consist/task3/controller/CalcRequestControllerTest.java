@@ -15,12 +15,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CalcRequestController.class)
@@ -38,86 +37,133 @@ class CalcRequestControllerTest {
     @Test
     void add_ExpressionValid_ReturnStatusCreated_ExpressionIdInHeader() throws Exception {
 
-        BDDMockito
-                .given(service.addExpression(URLEncoder.encode("2+3", StandardCharsets.UTF_8), false, ""))
+        ExpressionDto expressionDto = new ExpressionDto(
+                "2+3",
+                false,
+                ExpressionStatus.IN_PROGRESS,
+                ""
+        );
+        String expressionDtoJson = objectMapper.writeValueAsString(expressionDto);
+
+        BDDMockito.given(service.addExpression(URLEncoder.encode("2+3", StandardCharsets.UTF_8), false, ""))
                 .willReturn("1");
 
         mockMvc.perform(post("/api/calcrequest")
-                        .param("expr", "2+3")
-                        .param("needlog", "false"))
-                .andDo(MockMvcResultHandlers.print())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(expressionDtoJson))
+                .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/calcrequest/1"));
+                .andExpect(header().string("Location", "/api/calcrequest/1"))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json("""
+                        {
+                            "expression": "2+3",
+                            "needLog": false,
+                            "status": "IN_PROGRESS",
+                            "description": ""
+                        }
+                        """));
     }
 
     @Test
     void add_ExpressionInvalid_ReturnStatusInternalServerError() throws Exception {
+
+        String expressionDtoJson = """
+                {
+                    "expression": "a+b",
+                    "needLog": false
+                }
+                """;
 
         BDDMockito
                 .given(service.addExpression(URLEncoder.encode("a+b", StandardCharsets.UTF_8), false, ""))
                 .willReturn(null);
 
         mockMvc.perform(post("/api/calcrequest")
-                        .param("expr", "a+b")
-                        .param("needlog", "false"))
-                .andDo(MockMvcResultHandlers.print())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(expressionDtoJson))
+                .andDo(print())
                 .andExpect(status().isInternalServerError());
     }
 
     @Test
     void getResultById_ExpressionFound_StatusCompleted_ReturnResult() throws Exception {
 
-        ExpressionDto completedExpressionDto = new ExpressionDto(1, ExpressionStatus.COMPLETED);
+        ExpressionDto completedExpressionDto = new ExpressionDto(
+                "2+3",
+                false,
+                ExpressionStatus.COMPLETED,
+                ""
+        );
+        String expressionDtoJson = """
+                    {
+                        "expression": "2+3",
+                        "needLog": false,
+                        "status": "COMPLETED",
+                        "description": ""
+                    }
+                """;
+        BDDMockito.given(service.getResultById(1)).willReturn(completedExpressionDto);
 
-        BDDMockito
-                .given(service.getResultById(1))
-                .willReturn(completedExpressionDto);
-
-        mockMvc.perform(get("/api/calcrequest/1")
-                        .param("expr", "2+3"))
-                .andDo(MockMvcResultHandlers.print())
+        mockMvc.perform(get("/api/calcrequest/1"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().string(objectMapper.writeValueAsString(completedExpressionDto)));
+                .andExpect(content().json(expressionDtoJson));
     }
 
     @Test
     void getResultById_ExpressionFound_StatusInProgress_ReturnStatusAccepted() throws Exception {
 
-        ExpressionDto expressionCalculationInProgress = new ExpressionDto(1, ExpressionStatus.IN_PROGRESS);
-
-        BDDMockito
-                .given(service.getResultById(1))
-                .willReturn(expressionCalculationInProgress);
+        ExpressionDto expressionCalculationInProgress = new ExpressionDto(
+                "2+3",
+                false,
+                ExpressionStatus.IN_PROGRESS,
+                ""
+        );
+        BDDMockito.given(service.getResultById(1)).willReturn(expressionCalculationInProgress);
 
         mockMvc.perform(get("/api/calcrequest/1")
-                        .param("expr", "2+3")
-                        .param("needlog", "false"))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isAccepted());
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isAccepted())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(objectMapper.writeValueAsString(expressionCalculationInProgress)));
     }
 
     @Test
     void getResultById_ExpressionNotFound_ReturnStatusNotFound() throws Exception {
 
-        BDDMockito
-                .given(service.getResultById(1))
-                .willReturn(null);
+        BDDMockito.given(service.getResultById(1)).willReturn(null);
 
-        mockMvc.perform(get("/api/calcrequest/1")
-
-                        .param("expr", "2+3")
-                        .param("needlog", "false"))
-                .andDo(MockMvcResultHandlers.print())
+        mockMvc.perform(get("/api/calcrequest/1"))
+                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void getAll_ReturnsListOfDto_StatusOK() throws Exception {
-        List<ExpressionDto> listOfDto = new ArrayList<>();
-        listOfDto.add(new ExpressionDto(1, ExpressionStatus.COMPLETED));
-        listOfDto.add(new ExpressionDto(2, ExpressionStatus.COMPLETED));
-        listOfDto.add(new ExpressionDto(3, ExpressionStatus.IN_PROGRESS));
+
+        List<ExpressionDto> listOfDto = Arrays.asList(
+                new ExpressionDto(
+                        "2+3",
+                        true,
+                        ExpressionStatus.COMPLETED,
+                        ""
+                ),
+                new ExpressionDto(
+                        "4*5",
+                        false,
+                        ExpressionStatus.COMPLETED,
+                        ""
+                ),
+                new ExpressionDto(
+                        "6-1",
+                        false,
+                        ExpressionStatus.IN_PROGRESS,
+                        ""
+                )
+        );
 
         BDDMockito
                 .given(service.getAllExpressions())
@@ -158,46 +204,38 @@ class CalcRequestControllerTest {
     @Test
     void updateById_ExpressionFound_ReturnStatusOK() throws Exception {
 
-        BDDMockito.given(service.updateById(any(Integer.class), any(String.class), eq(false))).willReturn(true);
+        String requestJson = """
+                {
+                    "description": "Updated description"
+                }
+                """;
+
+        BDDMockito.given(service.updateById(1, URLEncoder.encode("Updated description", StandardCharsets.UTF_8)))
+                .willReturn(true);
 
         mockMvc.perform(put("/api/calcrequest/1")
-                        .param("expr", "3+7")
-                        .param("needlog", "false"))
-                .andDo(MockMvcResultHandlers.print())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andDo(print())
                 .andExpect(status().isOk());
     }
 
     @Test
     void updateById_ExpressionNotFound_ReturnStatusNotFound() throws Exception {
 
-        BDDMockito.given(service.updateById(any(Integer.class), any(String.class), eq(false))).willReturn(false);
+        String requestJson = """
+                {
+                    "description": "Updated description"
+                }
+                """;
 
-        mockMvc.perform(put("/api/calcrequest/999")
-                        .param("expr", "3+7")
-                        .param("needlog", "false"))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isNotFound());
-    }
+        BDDMockito.given(service.updateById(1, URLEncoder.encode("Updated description", StandardCharsets.UTF_8)))
+                .willReturn(false);
 
-    @Test
-    void updateDescription_ExpressionFound_ReturnStatusOK() throws Exception {
-
-        BDDMockito.given(service.updateDescription(any(Integer.class), any(String.class))).willReturn(true);
-
-        mockMvc.perform(put("/api/calcrequest/1/descriptions")
-                        .param("text", "Updated description"))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void updateDescription_ExpressionNotFound_ReturnStatusNotFound() throws Exception {
-
-        BDDMockito.given(service.updateDescription(any(Integer.class), any(String.class))).willReturn(false);
-
-        mockMvc.perform(put("/api/calcrequest/999/description")
-                        .param("text", "Updated description"))
-                .andDo(MockMvcResultHandlers.print())
+        mockMvc.perform(put("/api/calcrequest/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 }

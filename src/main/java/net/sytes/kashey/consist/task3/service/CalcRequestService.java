@@ -83,6 +83,7 @@ public class CalcRequestService {
 
         Optional<Expression> optionalExpression = repository.findById(id);
         if (optionalExpression.isPresent()) {
+            optionalExpression.get().deletionMark(true);
             if (needLog) {
                 client.addNote(new Note("Expression with id=" + id + " was successfully removed"));
             }
@@ -91,35 +92,21 @@ public class CalcRequestService {
         return false;
     }
 
-    public boolean updateById(int id, String newExpression, boolean needLog) {
+    @Transactional
+    public boolean updateById(int id, String newDescription) {
 
         Optional<Expression> optionalExpression = repository.findById(id);
         if (optionalExpression.isPresent()) {
             Expression existingExpression = optionalExpression.get();
-            Expression updatedExpr = new Expression(existingExpression.getId(), newExpression,
-                    existingExpression.isNeedLog(), existingExpression.getStatus(),
-                    existingExpression.getResult(), existingExpression.getDescription());
-            CompletableFuture<Expression> future = CompletableFuture.supplyAsync(() -> Calculator.calculate(updatedExpr));
+            existingExpression.updateDescription(newDescription);
+            CompletableFuture<Expression> future = CompletableFuture.supplyAsync(() -> Calculator.calculate(existingExpression));
             future.thenAcceptAsync(updExpr -> {
                 repository.save(updExpr);
-                if (needLog) {
+                if (existingExpression.isNeedLog()) {
                     client.addNote(new Note("Expression " + updExpr.getExpression() + ", id=" + id
                                             + " was updated and added back to the pool"));
                 }
             });
-            return true;
-        }
-        return false;
-    }
-
-    @Transactional
-    public boolean updateDescription(int id, String newDescription) {
-        Optional<Expression> optionalExpression = repository.findById(id);
-        if (optionalExpression.isPresent()) {
-            Expression existingExpression = optionalExpression.get();
-            Expression updatedExpression = new Expression(existingExpression.getId(), existingExpression.getExpression(),
-                    existingExpression.isNeedLog(), existingExpression.getStatus(), existingExpression.getResult(), newDescription);
-            repository.save(updatedExpression);
             return true;
         }
         return false;

@@ -24,13 +24,11 @@ public class Expression {
 
     private String description;
 
+    private boolean deleted;
+
     public Expression() {
         this.status = ExpressionStatus.IN_PROGRESS;
         this.result = 0.0;
-    }
-
-    public Expression(String expression) {
-        this(expression, false);
     }
 
     public Expression(String expression, boolean needLog) {
@@ -64,15 +62,6 @@ public class Expression {
         this.description = "";
     }
 
-
-    public Expression(String expression, boolean needLog, ExpressionStatus status, double result, String description) {
-        this.expression = expression;
-        this.status = status;
-        this.needLog = needLog;
-        this.result = result;
-        this.description = description;
-    }
-
     public String getExpression() {
         return expression;
     }
@@ -95,5 +84,13 @@ public class Expression {
 
     public String getDescription() {
         return description;
+    }
+
+    public void updateDescription(String description) {
+        this.description = description;
+    }
+
+    public void deletionMark(boolean deleted) {
+        this.deleted = deleted;
     }
 }
