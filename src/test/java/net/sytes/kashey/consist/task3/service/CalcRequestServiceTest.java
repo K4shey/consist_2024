@@ -3,21 +3,22 @@ package net.sytes.kashey.consist.task3.service;
 
 import net.sytes.kashey.consist.task3.client.RestGitlabClient;
 import net.sytes.kashey.consist.task3.dto.ExpressionDto;
+import net.sytes.kashey.consist.task3.mapper.ExpressionMapper;
 import net.sytes.kashey.consist.task3.model.Expression;
 import net.sytes.kashey.consist.task3.model.ExpressionStatus;
 import net.sytes.kashey.consist.task3.model.Note;
+import net.sytes.kashey.consist.task3.repository.ExpressionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,62 +31,72 @@ class CalcRequestServiceTest {
     @Mock
     private RestGitlabClient gitlabClient;
 
+    @Mock
+    private ExpressionRepository repository;
 
     private CalcRequestService service;
 
+    @Mock
+    private ExpressionMapper mapper;
+
+
     @BeforeEach
     void setUp() {
-        this.service = new CalcRequestService(gitlabClient);
+        this.service = new CalcRequestService(gitlabClient, repository, mapper);
     }
 
     @Test
     void addExpression_ValidExpressionWithLogging_ReturnsId_WriteLog() {
 
         when(gitlabClient.addNote(any(Note.class))).thenReturn(true);
+        Expression savedExpression = new Expression(1, "2+3", true, ExpressionStatus.IN_PROGRESS,
+                5.0, "");
+        when(repository.save(any(Expression.class))).thenReturn(savedExpression);
 
-        assertThat(service.addExpression("2+3", true)).isNotNull();
+        Integer expressionId = Integer.valueOf(service.addExpression("2+3", true, ""));
+
+        assertThat(expressionId).isNotNull();
+        assertThat(expressionId).isEqualTo(1);
+        ArgumentCaptor<Expression> expressionCaptor = ArgumentCaptor.forClass(Expression.class);
+        verify(repository).save(expressionCaptor.capture());
+        Expression capturedExpression = expressionCaptor.getValue();
+        assertThat(capturedExpression.getExpression()).isEqualTo("2+3");
+        assertThat(capturedExpression.isNeedLog()).isTrue();
+        assertThat(capturedExpression.getStatus()).isEqualTo(ExpressionStatus.IN_PROGRESS);
+        verify(gitlabClient).addNote(any(Note.class));
     }
 
-
     @Test
-    void addExpression_InvalidExpression_ReturnsNull() {
+    void addExpression_InvalidExpression__ExceptionThrown() {
 
-        assertThat(service.addExpression("a+b", false)).isNull();
+        assertThrows(RuntimeException.class, () -> service.addExpression("a+b", false, ""));
     }
 
     @Test
     void getResultById_ExistingId_ReturnsExpression() {
 
-        Expression expectedResult = new Expression(1, "2+3", true);
-        CompletableFuture<Expression> future = CompletableFuture.completedFuture(expectedResult);
-        service.getExpressionPool().put(1, future);
-
+        Expression expectedResult = new Expression(1, "2+3", true, ExpressionStatus.COMPLETED,
+                5.0, "");
+        when(repository.findById(1)).thenReturn(Optional.of(expectedResult));
         when(gitlabClient.addNote(any(Note.class))).thenReturn(true);
-        Expression result = service.getResultById(1);
 
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedResult);
+        ExpressionDto result = service.getResultById(1);
+
+        assertThat(result).isEqualTo(mapper.toDto(expectedResult));
     }
-
 
     @Test
     void getResultById_ExpressionNotExists_ReturnsNull() {
 
-        Expression result = service.getResultById(999);
+        ExpressionDto result = service.getResultById(999);
 
         assertThat(result).isNull();
     }
 
     @Test
-    void getResultById_ExceptionThrown() throws InterruptedException, ExecutionException {
+    void getResultById_ExceptionThrown() {
 
-        CompletableFuture<Expression> future = mock(CompletableFuture.class);
-        Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
-        expressionPool.put(1, future);
-        service.setExpressionPool(expressionPool);
-
-        when(future.isDone()).thenReturn(true);
-        when(future.get()).thenThrow(new ExecutionException(new RuntimeException()));
+        when(repository.findById(1)).thenThrow(new RuntimeException());
 
         assertThrows(RuntimeException.class, () -> service.getResultById(1));
     }
@@ -93,33 +104,101 @@ class CalcRequestServiceTest {
     @Test
     void getResultById_CalculationInProgress() {
 
-        CompletableFuture<Expression> future = new CompletableFuture<>();
-        service.getExpressionPool().put(1, future);
+        Expression inProgressExpression = new Expression(
+                1,
+                "dummy",
+                true,
+                ExpressionStatus.IN_PROGRESS,
+                0.0,
+                ""
+        );
+        ExpressionDto inProgressExpressionDto = new ExpressionDto(
+//                1,
+                "dummy",
+                true,
+                ExpressionStatus.IN_PROGRESS,
+                ""
+        );
+        when(repository.findById(1)).thenReturn(Optional.of(inProgressExpression));
+        when(mapper.toDto(inProgressExpression)).thenReturn(inProgressExpressionDto);
 
-        Expression result = service.getResultById(1);
+        ExpressionDto result = service.getResultById(1);
 
         assertThat(result).isNotNull();
-        assertThat(result.getExpression()).isEqualTo("dummy");
+//        assertThat(result.id()).isEqualTo(1);
+        assertThat(result.status()).isEqualTo(ExpressionStatus.IN_PROGRESS);
     }
 
     @Test
     void getAllExpressions_ReturnsCorrectList() {
 
-        Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
-        CompletableFuture<Expression> completedFuture1 = CompletableFuture
-                .completedFuture(new Expression(1, "2+3", true, ExpressionStatus.COMPLETED, 5.0));
-        CompletableFuture<Expression> completedFuture2 = CompletableFuture
-                .completedFuture(new Expression(2, "4*5", false, ExpressionStatus.COMPLETED, 20.0));
-        CompletableFuture<Expression> inProgressFuture = new CompletableFuture<>();
-        expressionPool.put(1, completedFuture1);
-        expressionPool.put(2, completedFuture2);
-        expressionPool.put(3, inProgressFuture);
-        service.setExpressionPool(expressionPool);
-
+        Expression expression1 = new Expression(
+                1,
+                "2+3",
+                true,
+                ExpressionStatus.COMPLETED,
+                5.0,
+                ""
+        );
+        Expression expression2 = new Expression(2,
+                "4*5",
+                false,
+                ExpressionStatus.COMPLETED,
+                20.0,
+                ""
+        );
+        Expression expression3 = new Expression(
+                3,
+                "6-1",
+                false,
+                ExpressionStatus.IN_PROGRESS,
+                0.0,
+                ""
+        );
+        List<Expression> expressions = Arrays.asList(expression1, expression2, expression3);
+        when(repository.findAll()).thenReturn(expressions);
+        when(mapper.toDto(expression1)).thenReturn(new ExpressionDto(
+//                1,
+                "2+3",
+                true,
+                ExpressionStatus.COMPLETED,
+                ""
+        ));
+        when(mapper.toDto(expression2)).thenReturn(new ExpressionDto(
+//                2,
+                "4*5",
+                false,
+                ExpressionStatus.COMPLETED,
+                ""
+        ));
+        when(mapper.toDto(expression3)).thenReturn(new ExpressionDto(
+//                3,
+                "6-1",
+                false,
+                ExpressionStatus.IN_PROGRESS,
+                ""));
         List<ExpressionDto> expectedResults = Arrays.asList(
-                new ExpressionDto(1, ExpressionStatus.COMPLETED),
-                new ExpressionDto(2, ExpressionStatus.COMPLETED),
-                new ExpressionDto(3, ExpressionStatus.IN_PROGRESS)
+                new ExpressionDto(
+//                        1,
+                        "2+3",
+                        true,
+                        ExpressionStatus.COMPLETED,
+                        ""
+                ),
+                new ExpressionDto(
+//                        2,
+                        "4*5",
+                        false,
+                        ExpressionStatus.COMPLETED,
+                        ""
+                ),
+                new ExpressionDto(
+//                        3,
+                        "6-1",
+                        false,
+                        ExpressionStatus.IN_PROGRESS,
+                        ""
+                )
         );
 
         List<ExpressionDto> result = service.getAllExpressions();
@@ -130,34 +209,11 @@ class CalcRequestServiceTest {
     }
 
     @Test
-    void testGetAllExpressions_ExceptionThrown() throws InterruptedException, ExecutionException {
+    void testGetAllExpressions_ExceptionThrown() {
 
-        CompletableFuture<Expression> exceptionFuture = new CompletableFuture<>();
-        exceptionFuture.completeExceptionally(new InterruptedException("Test exception"));
+        when(repository.findAll()).thenThrow(new RuntimeException("Test exception"));
 
-        Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
-        expressionPool.put(1, exceptionFuture);
-        service.setExpressionPool(expressionPool);
-
-        assertThrows(RuntimeException.class, () -> {
-            service.getAllExpressions();
-        });
-    }
-
-
-    @Test
-    void deleteById_RemovesExpressionFromPool() {
-
-        Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
-        CompletableFuture<Expression> future = CompletableFuture.completedFuture(new Expression("2+2"));
-        expressionPool.put(1, future);
-        service.setExpressionPool(expressionPool);
-
-        boolean result = service.deleteById(1, true);
-
-        assertThat(expressionPool.containsKey(1)).isFalse();
-        assertThat(result).isTrue();
-        verify(gitlabClient, times(1)).addNote(any(Note.class));
+        assertThrows(RuntimeException.class, () -> service.getAllExpressions());
     }
 
     @Test
@@ -171,35 +227,41 @@ class CalcRequestServiceTest {
         verify(gitlabClient, never()).addNote(any(Note.class));
     }
 
+
     @Test
-    void updateById_ReturnsTrueAndUpdateExpressionInPool() {
+    void deleteById_ExpressionFound_WithLogging() {
 
-        CompletableFuture<Expression> future = CompletableFuture.completedFuture(new Expression("2+3", false));
-        Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
-        expressionPool.put(1, future);
-        service.setExpressionPool(expressionPool);
+        Expression existingExpression = new Expression(1, "2+2", true, ExpressionStatus.IN_PROGRESS, 4.0, "");
+        BDDMockito.given(repository.findById(1)).willReturn(Optional.of(existingExpression));
 
-        boolean result = service.updateById(1, "5+7", false);
+        boolean result = service.deleteById(1, true);
 
         assertThat(result).isTrue();
+        verify(gitlabClient, times(1)).addNote(
+                argThat(note -> note.body().contains("Expression with id=1 was successfully removed"))
+        );
     }
 
     @Test
-    void updateById_ReturnsFalseIfExpressionNotFound() {
+    void updateById_ExpressionFound_UpdatesDescription() {
 
-        CompletableFuture<Expression> future = new CompletableFuture<>();
-        Map<Integer, CompletableFuture<Expression>> expressionPool = new ConcurrentHashMap<>();
-        expressionPool.put(1, future);
-        service.setExpressionPool(expressionPool);
+        Expression existingExpression = new Expression(1, "2+2", true, ExpressionStatus.COMPLETED,
+                4.0, "");
+        when(repository.findById(1)).thenReturn(Optional.of(existingExpression));
 
-        boolean result = service.updateById(1, "2+3", true);
+        boolean result = service.updateById(1, "Updated description");
+
+        assertThat(result).isTrue();
+        assertThat(existingExpression.getDescription()).isEqualTo("Updated description");
+    }
+
+    @Test
+    void updateById_ExpressionNotFound_ReturnsFalse() {
+        when(repository.findById(1)).thenReturn(Optional.empty());
+
+        boolean result = service.updateById(1, "Updated description");
 
         assertThat(result).isFalse();
-    }
-
-    @Test
-    void updateById_ExpressionNotFound_ThrowsIllegalArgumentException() {
-
-        assertThrows(IllegalArgumentException.class, () -> service.updateById(1, "2+3", true));
+        verify(repository, never()).save(any(Expression.class));
     }
 }
