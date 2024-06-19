@@ -1,9 +1,21 @@
-gitlab:
-  token:
-  project: 55606763
-  issue: 3
 spring:
   application:
-    name: task3
+    name: software-version-manager
+  datasource:
+    url: jdbc:postgresql://localhost:5432/software_manager_db
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://localhost:5432/software_manager_db
+    user: user
+    password: password
+    schemas: public
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
 server:
   port: 8090
